@@ -147,6 +147,16 @@ Single Player Timer / Socket.IO Sync
 
 ---
 
+## Pose Input Design
+
+実装後に追記予定です。
+
+## Motion Detection
+
+実装後に追記予定です。
+
+---
+
 ## 3D Avatar
 
 本作品では、Blenderで作成・リギングした人型モデルを使用します。
