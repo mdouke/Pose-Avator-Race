@@ -281,6 +281,16 @@ http://localhost:3000
 
 ---
 
+## Development Process
+
+本作品は、VSCodeとCodexを用いたAI支援開発によって制作します。
+
+開発では、GitHub Issueに整理したタスクをもとに、Codexを活用してコードの追加・修正・リファクタリングを行います。実装内容はローカル環境で逐次確認し、エラーや挙動を検証しながら、既存のCube Raceを段階的に拡張していきます。
+
+開発者は、作品コンセプトの設計、要件定義、タスク分解、実装方針の判断、動作確認、デバッグ方針の決定を担当します。
+
+---
+
 ## Development Roadmap
 
 ### Milestone 1: Repository Refactor
