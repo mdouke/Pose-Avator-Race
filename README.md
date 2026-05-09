@@ -275,7 +275,7 @@ http://localhost:3000
 
 ### Milestone 1: Repository Refactor
 
-- [ ] READMEを書き直す
+- [x] READMEを書き直す
 - [ ] 既存Cube Raceのファイル構成を確認する
 - [ ] 既存機能を壊さずに起動確認する
 - [ ] JavaScriptファイルの役割を整理する
