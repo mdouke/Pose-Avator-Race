@@ -10,7 +10,37 @@ app.use(express.static('public'));
 
 let players = {};
 let connectedPlayers = 0;
-let ready_count = 0; // モードのカウント
+const readyPlayers = new Set();
+const startPositions = [-250, 250];
+const playerStartY = 100;
+const playerStartZ = 14800;
+
+function emitDebugState(eventName) {
+    const state = {
+        event: eventName,
+        connectedPlayers,
+        readyCount: readyPlayers.size,
+        playerIds: Object.keys(players),
+        readyPlayerIds: Array.from(readyPlayers)
+    };
+    console.log('debugState:', state);
+    io.emit('debugState', state);
+}
+
+function emitInitialState(socket) {
+    const player = players[socket.id];
+    if (!player) {
+        return;
+    }
+
+    socket.emit('myMachine', player);
+
+    Object.values(players).forEach((otherPlayer) => {
+        if (otherPlayer.id !== socket.id) {
+            socket.emit('opponent', otherPlayer);
+        }
+    });
+}
 
 io.on('connection', (socket) => {
     console.log('New Player Connected:', socket.id);
@@ -32,9 +62,9 @@ io.on('connection', (socket) => {
     players[socket.id] = {
         id: socket.id,
         position: {
-            x: 0,
-            y: 0,
-            z: 0
+            x: startPositions[connectedPlayers - 1] || 0,
+            y: playerStartY,
+            z: playerStartZ
         },
         scale: {
             x: 1,
@@ -42,24 +72,32 @@ io.on('connection', (socket) => {
             z: 1
         }
     };
+    emitDebugState('connection');
 
     socket.on('ready', () => {
-        ready_count++;
-        if (ready_count >= 2) {
+        readyPlayers.add(socket.id);
+        console.log('ready:', readyPlayers.size);
+        emitDebugState('ready');
+
+        if (readyPlayers.size >= 2) {
             io.emit('gameStart', 'ゲームを開始します');
-            ready_count = 0;
+            readyPlayers.clear();
+            emitDebugState('gameStart');
         }
-        console.log('ready:', ready_count);
     });
 
     socket.on('unReady', () => {
-        ready_count--;
-        console.log('unReady:', ready_count);
+        readyPlayers.delete(socket.id);
+        console.log('unReady:', readyPlayers.size);
+        emitDebugState('unReady');
     });
 
     
-    socket.emit('myMachine', players);
-    socket.emit('opponent', players[socket.id]);
+    socket.on('requestInitialState', () => {
+        emitInitialState(socket);
+    });
+
+    emitInitialState(socket);
 
     // クライアントからのデータを受信
     socket.on('position', (position) => {
@@ -78,7 +116,9 @@ io.on('connection', (socket) => {
         connectedPlayers--; // プレイヤーが切断されたときにカウントを減少
         console.log('Player Disconnected:', socket.id);
         delete players[socket.id];
+        readyPlayers.delete(socket.id);
         io.emit('disconnected', socket.id);
+        emitDebugState('disconnect');
     });
 });
 

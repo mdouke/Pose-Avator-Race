@@ -13,8 +13,6 @@
       }
     }
   </script>
-  <!-- index.jsを読み込む -->
-  <script type="module" src="./js/three.js"></script>
 </head>
 
 <body>
@@ -24,10 +22,14 @@
     <h1>Cube Race</h1>
     <p id="message" hidden></p>
     <p id="messages"></p>
+    <pre id="debugPanel" style="font-size:12px;background:#111;color:#0f0;padding:8px;white-space:pre-wrap;"></pre>
 
 
     <button id="webcamButton" disabled>
       ENABLE WEBCAM
+    </button>
+    <button id="debugReadyButton" type="button">
+      DEBUG READY
     </button>
     <div style="position: relative;">
       <video id="webcam" style="position:absolute;left:0px;top:0px;width:300px;height:auto" autoplay playsinline></video>
@@ -43,10 +45,15 @@
     <script type="module" src="./js/script.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const socket = io();
+      window.socket = io();
+      const socket = window.socket;
 
       socket.on('connect', () => {
-      console.log('Connected to server:', socket.id);
+        console.log('Connected to server:', socket.id);
+        window.updateDebugPanel?.({
+          event: 'clientConnect',
+          socketId: socket.id
+        });
       });
 
       socket.on('disconnect', () => {
@@ -58,10 +65,50 @@
       });
 
       socket.on('start', () => {
+        window.serverStartReceived = true;
+        window.serverStartMessage = "ゲームを開始します";
         document.getElementById('messages').innerText = "カメラを開いて、顔の上で丸を作ってください";
       });
 
+      socket.on('debugState', (state) => {
+        window.serverDebugState = state;
+        window.updateDebugPanel?.();
+      });
+
+      document.getElementById('debugReadyButton').addEventListener('click', () => {
+        socket.emit('ready');
+        window.gameDebugState = {
+          ...(window.gameDebugState || {}),
+          event: 'debugReady',
+          modeName: 'READY'
+        };
+        window.updateDebugPanel?.();
+      });
+
+      window.updateDebugPanel = (extra = {}) => {
+        const panel = document.getElementById('debugPanel');
+        if (!panel) {
+          return;
+        }
+
+        const state = window.serverDebugState || {};
+        const gameDebug = window.gameDebugState || {};
+        panel.textContent = [
+          `socketId: ${socket.id || '-'}`,
+          `clientEvent: ${extra.event || gameDebug.event || '-'}`,
+          `gameMode: ${gameDebug.modeName || '-'}`,
+          `poseDetected: ${gameDebug.poseDetected ?? '-'}`,
+          `readyPose: ${gameDebug.readyPose ?? '-'}`,
+          `connectedPlayers: ${state.connectedPlayers ?? '-'}`,
+          `readyCount: ${state.readyCount ?? '-'}`,
+          `playerIds: ${(state.playerIds || []).join(', ') || '-'}`,
+          `readyPlayerIds: ${(state.readyPlayerIds || []).join(', ') || '-'}`,
+          `lastServerEvent: ${state.event || '-'}`
+        ].join('\n');
+      };
+
     </script>
+    <script type="module" src="./js/three.js"></script>
 
   </body>
 

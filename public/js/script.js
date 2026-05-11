@@ -88,7 +88,9 @@ async function predictWebcam() {
         lastVideoTime = video.currentTime;
         results = poseLandmarker.detectForVideo(video, startTimeMs);
     }
-    gotPoses(results);
+    if (window.gotPoses) {
+        window.gotPoses(results);
+    }
     // canvasCtx.save();
     // canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     // if (results.landmarks) {
